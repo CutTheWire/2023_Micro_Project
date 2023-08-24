@@ -1,0 +1,1 @@
+pyinstaller --onefile --windowed --name TWCV --icon="TW.ico" C:\tinywave\2_Function\CAM_MAIN\camera_stream.py
