@@ -27,7 +27,7 @@ binary_img[~condition] = [255, 255, 255]
 
 # Create subplots using GridSpec
 fig = plt.figure(figsize=(12, 6))
-grid = plt.GridSpec(1, 3, wspace=0.1, hspace=0.1)
+grid = plt.GridSpec(2, 3, wspace=0.1, hspace=0.1)
 
 # RGB 채널 데이터 추출
 r_channel_data = binary_img_copy[:, :, 0]
@@ -53,15 +53,15 @@ ax3.set_title("binary Image")
 ax3.axis('off')
 
 # Plot RGB channel histograms together
-# ax4 = plt.subplot(grid[1, :])
-# ax4.hist(r_channel_data.flatten(), bins=100, range=(0, 96), color='r', alpha=0.5, label='R Channel')
-# ax4.hist(g_channel_data.flatten(), bins=100, range=(0, 71), color='g', alpha=0.7, label='G Channel')
-# ax4.hist(b_channel_data.flatten(), bins=100, range=(0, 96), color='b', alpha=0.5, label='B Channel')
-# ax4.set_title("R and B Channel Distribution")
-# ax4.set_xlabel("Pixel Value")
-# ax4.set_ylabel("Frequency")
-# ax4.set_xticks(np.arange(0, 96, 5))  # x 축 눈금을 5 단위로 설정
-# ax4.legend()
+ax4 = plt.subplot(grid[1, :])
+ax4.hist(r_channel_data.flatten(), bins=100, range=(0, 96), color='r', alpha=0.5, label='R Channel')
+ax4.hist(g_channel_data.flatten(), bins=100, range=(0, 71), color='g', alpha=0.7, label='G Channel')
+ax4.hist(b_channel_data.flatten(), bins=100, range=(0, 96), color='b', alpha=0.5, label='B Channel')
+ax4.set_title("R and B Channel Distribution")
+ax4.set_xlabel("Pixel Value")
+ax4.set_ylabel("Frequency")
+ax4.set_xticks(np.arange(0, 96, 5))  # x 축 눈금을 5 단위로 설정
+ax4.legend()
 
 plt.tight_layout()
 plt.show()
