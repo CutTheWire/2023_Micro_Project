@@ -5,6 +5,8 @@ from PIL import Image, ImageTk
 import numpy as np
 import copy
 import ctypes
+from tkinter import PhotoImage
+from PIL import Image, ImageTk 
 
 # 초록색 범위 설정 (HSV 순서로 설정)
 lower_green = np.array([45, 80, 80])
@@ -110,7 +112,8 @@ def button_clicked():
     area_dictionary_P = {}
     location_nparr = []
     
-    _, frame = cap.read()
+    # _, frame = cap.read()
+    frame = cv2.imread("C:/tinywave_2/2.jpg")
     approx_frame = copy.deepcopy(frame)
 
     hsv = cv2.cvtColor(approx_frame, cv2.COLOR_BGR2HSV)
@@ -161,7 +164,12 @@ def button_clicked():
         output_list.insert(tk.END, "ㅤ")
 
         approx_pos_G = find_rect_corners(approx_main_area)
+        # for point in approx_pos_G:
+        #     cv2.circle(approx_frame, tuple(point[0]), 25, (125, 0, 55), -1)
+
         approx_pos_P = find_rect_corners(approx_sub_area)
+        # for point in approx_pos_P:
+        #     cv2.circle(approx_frame, tuple(point[0]), 25, (255, 0, 255), -1)
         approx_pos_main = find_nearest_approx(approx_pos_G, approx_pos_P)
         
         output_list.insert(tk.END, f"#. approx_pos : {approx_pos_G}\n")
@@ -172,21 +180,21 @@ def button_clicked():
             approx_pos_frame = copy.deepcopy(approx_frame)
             output_list.insert(tk.END, f"#. fix_approx_pos : {approx_pos_main}\n")
 
-            for corner in approx_pos_G:
-                x, y = corner[0]
-                cv2.circle(approx_pos_frame, (x, y), 5, (105, 0, 255), -1)
+            # for corner in approx_pos_G:
+            #     x, y = corner[0]
+            #     cv2.circle(approx_pos_frame, (x, y), 5, (105, 0, 255), -1)
 
             for corner in approx_pos_main:
                 x, y = corner[0]
-                cv2.circle(approx_pos_frame, (x, y), 5, (255, 105, 0), -1)
+                cv2.circle(approx_pos_frame, (x, y), 25, (255, 105, 0), -1)
                 location_nparr.append([x, y])
 
             location = np.array(location_nparr, np.float32)
             location2 = np.array([[0, 1200], [900, 1200], [900, 0], [0, 0]], np.float32)
             pers = cv2.getPerspectiveTransform(location, location2)
+            print(type(pers))
             dst = cv2.warpPerspective(approx_frame, pers, (900, 1200))
             dst = cv2.flip(dst, 0)
-            
         # 모니터 해상도를 얻습니다.
         screen_width, screen_height = get_monitor_resolution()
 
@@ -266,11 +274,13 @@ output_list.insert(tk.END, f"카메라 해상도: {width}x{height}")
 
 while True:
     # 프레임 읽기
-    ret, frame = cap.read()
-    if not ret:
-        break
+    # ret, frame = cap.read()
+    # if not ret:
+    #     break
+    # 이미지를 레이블에 표시하기 위해 PhotoImage 객체 생성
+    image = cv2.imread("C:/tinywave_2/2.jpg")
 
-    image_origin = green_line(frame)
+    image_origin = green_line(image)
     image_copy = copy.deepcopy(image_origin)
 
     # 이미지 크기 조정

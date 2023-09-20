@@ -12,12 +12,12 @@ matplotlib.use("TkAgg")
 import image_save as IS
 
 # 초록색 범위 설정 (HSV 순서로 설정)
-lower_green = np.array([45, 80, 80])
+lower_green = np.array([40, 80, 80])
 upper_green = np.array([90, 255, 255])
 
 # 자주색 범위 설정 (HSV 순서로 설정)
-lower_purple = np.array([145, 100, 100])
-upper_purple = np.array([195, 255, 255])
+lower_purple = np.array([160, 80, 80])
+upper_purple = np.array([175, 255, 255])
 
 Line = """
 =================================================================================
@@ -208,7 +208,7 @@ def button_clicked():
             sorted_values = sorted(all_group_values)
             total_values = len(sorted_values)
             top_10_percent = int(total_values * 0.1)
-            bottom_10_percent = int(total_values * 0.1)
+            bottom_10_percent = int(total_values * 0.9)
             middle_values = sorted_values[top_10_percent:total_values - bottom_10_percent]
 
             # 상위 10%와 하위 10%를 제외한 값들의 평균 계산
@@ -285,24 +285,28 @@ def button_clicked():
                 contour_zeros_imag  = cv2.dilate(contour_zeros_image, kernel, iterations=3)
                 result = cv2.bitwise_and(img_o, contour_zeros_image)
                 
+                # 결과 이미지의 녹색 채널 데이터 추출
                 channel_data = result[:,:,1]
                 filtered_data = channel_data[(channel_data >= 100) & (channel_data <= 2500)]
                 filtered_data_sorted_max = np.sort(filtered_data)[::-1]
                 filtered_data_sorted_min = np.sort(filtered_data)
                 filter_value = filtered_data_sorted_max[0]*0.68+filtered_data_sorted_min[0]*0.32
-
-                condition = result[:, :, 1] <= filter_value# channel values less than or equal
+                
+                # 조건에 맞지 않는 픽셀 값을 검은색으로 설정
+                condition = result[:, :, 1] <= filter_value
                 result[~condition] = [0,0,0]
-                # Convert the modified 'result' array to grayscale
+                
+                # 수정된 'result' 배열을 그레이스케일로 변환
                 result_gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
-
-                # Perform thresholding to obtain a binary image
+                
+                # 임계값 처리를 수행하여 이진 이미지 얻기
                 _, result_binary = cv2.threshold(result_gray, 0, 255, cv2.THRESH_BINARY)
-                # Find contours in the binary image
+                
+                # 이진 이미지에서 윤곽선 찾기
                 result_contours, _ = cv2.findContours(result_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 try:
                     for i in result_contours:
-                        if cv2.contourArea(i) < 400 and 50 < cv2.contourArea(i) :
+                        if cv2.contourArea(i) < 400 and 50 < cv2.contourArea(i):
                             cv2.drawContours(contour_image, [i], -1, g_color, -1)
                             new_contours += (i,)
                         else:
@@ -312,6 +316,7 @@ def button_clicked():
 
                             # 기존 이미지에서 해당 윤곽선 부분만 추출
                             masked_region = cv2.bitwise_and(contour_image_c , mask)
+                            
                             # 마스크된 영역의 빨간(R) 채널 데이터 추출
                             channel_data = masked_region[:, :, 2]
                             
@@ -320,6 +325,8 @@ def button_clicked():
                             filtered_data_sorted_max = np.sort(filtered_data)[::-1]
                             filtered_data_sorted_min = np.sort(filtered_data)
                             filter_value = filtered_data_sorted_max[0]*0.605+filtered_data_sorted_min[0]*0.395
+                            
+                            # 조건에 맞지 않는 픽셀 값을 검은색으로 설정
                             condition2 = masked_region[:, :, 2] <= filter_value
                             masked_region[~condition2] = [0,0,0]
                             
@@ -327,7 +334,7 @@ def button_clicked():
                             gray_masked_region = cv2.cvtColor(masked_region, cv2.COLOR_BGR2GRAY)
                             contours, _ = cv2.findContours(gray_masked_region, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                             
-                            # 추출된 윤곽선을 원본 이미지에 그리기
+                            # 원본 이미지에 추출된 윤곽선 그리기
                             for i in contours:
                                 if cv2.contourArea(i) < threshold_average and 50 < cv2.contourArea(i):
                                     cv2.drawContours(masked_region, [i], -1, g_color, -1)
@@ -385,6 +392,7 @@ def button_clicked():
         unit_contours = 0  # 초록색으로 칠해진 윤곽선 개수 초기화
         red_areas = []
         red_dict = {}
+
 
         for contour, contour_area in zip(new_contours, contour_areas):
             if contour_area > threshold_average:
@@ -466,12 +474,12 @@ button_frame.configure(bg="#666666")
 button_frame.pack(fill="both", expand=True)  # 좌측에 배치하고 왼쪽 여백 추가
 
 # 버튼 생성 및 스타일 변경
-capture_button = tk.Button(button_frame, text="Button", command=button_clicked, height=3, width=10)
+capture_button = tk.Button(button_frame, text="Check", command=button_clicked, height=3, width=18)
 capture_button.place(relx=0.5, rely=0.7, anchor="center")  # 상단 여백과 하단 여백 추가
 capture_button.configure(bg='#333333', fg="white", font=("Arial", 12, "bold"))
 
 # 버튼 생성 및 스타일 변경
-exit_button = tk.Button(button_frame, text="EXIT", command=exit_clicked, height=3, width=8)
+exit_button = tk.Button(button_frame, text="EXIT", command=exit_clicked, height=3, width=7)
 exit_button.place(relx=0.97, rely=0.04, anchor="center")  # 상단 여백과 하단 여백 추가
 exit_button.configure(bg='#333333', fg="white", font=("Arial", 10, "bold"))
 

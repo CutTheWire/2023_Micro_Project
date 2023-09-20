@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 # Image loading
-img = cv2.imread("./WIN_20230808_09_55_19_Pro.jpg")
+img = cv2.imread("./205355_Scan.jpg")
 
 alpha = 2.3  # 명암 조정값
 

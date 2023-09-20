@@ -11,23 +11,33 @@ def contour_areas_avg(filtered_contours):
         contour_area = cv2.contourArea(contour)
         contour_areas.append(contour_area)
 
-    # 50의 배수에 따라 그룹으로 나눔
+    # 10의 배수에 따라 그룹으로 나눔
     grouped_data = {}
     for value in contour_areas:
-        group = int(value // 50) * 50
+        group = int(value // 10) * 10
         if group in grouped_data:
             grouped_data[group].append(value)
         else:
             grouped_data[group] = [value]
+    
+    # 그룹 개체수를 계산합니다.
+    group_sizes = {key: len(values) for key, values in grouped_data.items()}
+    
+    # 개체수가 가장 많은 2개의 그룹을 찾습니다.
+    sorted_groups = sorted(group_sizes.items(), key=lambda x: x[1], reverse=True)
+    top_2_groups = sorted_groups[:2]
 
-    # 선택된 그룹들의 평균 계산
+    top_2_groups_data = []
     averages = []
-    values_in_group = grouped_data[group]
-    group_average = np.mean(values_in_group)
-    averages.append(group_average)
+
+    for group, _ in top_2_groups:
+        values = grouped_data[group]
+        top_2_groups_data.append(values)
+        average = np.mean(values)
+        averages.append(average)
 
     # 그룹의 데이터를 평탄하게 추출
-    all_group_values = [value for values in grouped_data.values() for value in values]
+    all_group_values = [value for values in top_2_groups_data for value in values]
 
     # 데이터를 정렬한 후 상위 10%와 하위 10%에 해당하는 값을 제외한 나머지 값들을 선택
     sorted_values = sorted(all_group_values)
@@ -35,13 +45,14 @@ def contour_areas_avg(filtered_contours):
     top_10_percent = int(total_values * 0.1)
     bottom_10_percent = int(total_values * 0.1)
     middle_values = sorted_values[top_10_percent:total_values - bottom_10_percent]
-
     # 상위 10%와 하위 10%를 제외한 값들의 평균 계산
     filtered_average = np.mean(middle_values)
+    print(filtered_average)
+
     return averages, filtered_average, contour_areas
 
 # Image loading
-img_o = cv2.imread("./1.jpg")
+img_o = cv2.imread("./162205_.jpg")
 height, width = img_o.shape[:2]
 
 img_o = img_o[int(height*0.01):int(height*0.99):,int(width*0.01):int(width*0.99)]
@@ -110,24 +121,28 @@ for contour, contour_area in zip(filtered_contours, contour_areas):
         contour_zeros_imag  = cv2.dilate(contour_zeros_image, kernel, iterations=3)
         result = cv2.bitwise_and(img_o, contour_zeros_image)
         
+        # 결과 이미지의 녹색 채널 데이터 추출
         channel_data = result[:,:,1]
         filtered_data = channel_data[(channel_data >= 100) & (channel_data <= 2500)]
         filtered_data_sorted_max = np.sort(filtered_data)[::-1]
         filtered_data_sorted_min = np.sort(filtered_data)
-        filter_value = filtered_data_sorted_max[0]*0.67+filtered_data_sorted_min[0]*0.33
-
-        condition = result[:, :, 1] <= filter_value# channel values less than or equal
+        filter_value = filtered_data_sorted_max[0]*0.68+filtered_data_sorted_min[0]*0.32
+        
+        # 조건에 맞지 않는 픽셀 값을 검은색으로 설정
+        condition = result[:, :, 1] <= filter_value
         result[~condition] = [0,0,0]
-        # Convert the modified 'result' array to grayscale
+        
+        # 수정된 'result' 배열을 그레이스케일로 변환
         result_gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
-
-        # Perform thresholding to obtain a binary image
+        
+        # 임계값 처리를 수행하여 이진 이미지 얻기
         _, result_binary = cv2.threshold(result_gray, 0, 255, cv2.THRESH_BINARY)
-        # Find contours in the binary image
+        
+        # 이진 이미지에서 윤곽선 찾기
         result_contours, _ = cv2.findContours(result_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         try:
             for i in result_contours:
-                if cv2.contourArea(i) < 520:
+                if cv2.contourArea(i) < 320 and 50 < cv2.contourArea(i):
                     cv2.drawContours(contour_image, [i], -1, g_color, -1)
                     new_contours += (i,)
                 else:
@@ -137,6 +152,7 @@ for contour, contour_area in zip(filtered_contours, contour_areas):
 
                     # 기존 이미지에서 해당 윤곽선 부분만 추출
                     masked_region = cv2.bitwise_and(contour_image_c , mask)
+                    
                     # 마스크된 영역의 빨간(R) 채널 데이터 추출
                     channel_data = masked_region[:, :, 2]
                     
@@ -144,7 +160,9 @@ for contour, contour_area in zip(filtered_contours, contour_areas):
                     filtered_data = channel_data[(channel_data >= 1) & (channel_data <= 200)]
                     filtered_data_sorted_max = np.sort(filtered_data)[::-1]
                     filtered_data_sorted_min = np.sort(filtered_data)
-                    filter_value = filtered_data_sorted_max[0]*0.7+filtered_data_sorted_min[0]*0.3
+                    filter_value = filtered_data_sorted_max[0]*0.5+filtered_data_sorted_min[0]*0.5
+                    
+                    # 조건에 맞지 않는 픽셀 값을 검은색으로 설정
                     condition2 = masked_region[:, :, 2] <= filter_value
                     masked_region[~condition2] = [0,0,0]
                     
@@ -152,9 +170,9 @@ for contour, contour_area in zip(filtered_contours, contour_areas):
                     gray_masked_region = cv2.cvtColor(masked_region, cv2.COLOR_BGR2GRAY)
                     contours, _ = cv2.findContours(gray_masked_region, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                     
-                    # 추출된 윤곽선을 원본 이미지에 그리기
+                    # 원본 이미지에 추출된 윤곽선 그리기
                     for i in contours:
-                        if cv2.contourArea(i) < 200:
+                        if cv2.contourArea(i) < threshold_average and 50 < cv2.contourArea(i):
                             cv2.drawContours(masked_region, [i], -1, g_color, -1)
                             cv2.drawContours(contour_image, [i], -1, g_color, -1)
                             new_contours += (i,)
@@ -166,7 +184,6 @@ for contour, contour_area in zip(filtered_contours, contour_areas):
                             # cv2.destroyAllWindows()
 
                         else:
-                            print("진입")
                             contour_image_c = copy.deepcopy(img_c)
                             mask = np.zeros_like(contour_image)
                             cv2.drawContours(mask, [i], -1, (255, 255, 255), -1)
@@ -180,7 +197,7 @@ for contour, contour_area in zip(filtered_contours, contour_areas):
                             filtered_data = channel_data[(channel_data >= 1) & (channel_data <= 200)]
                             filtered_data_sorted_max = np.sort(filtered_data)[::-1]
                             filtered_data_sorted_min = np.sort(filtered_data)
-                            filter_value = filtered_data_sorted_max[0]*0.7+filtered_data_sorted_min[0]*0.3
+                            filter_value = filtered_data_sorted_max[0]*0.5+filtered_data_sorted_min[0]*0.5
                             condition2 = masked_region_[:, :, 1] <= filter_value
                             masked_region_[~condition2] = [0,0,0]
                             
@@ -204,6 +221,7 @@ for contour, contour_area in zip(filtered_contours, contour_areas):
     else:
         cv2.drawContours(contour_image, [contour], -1, g_color, -1)
         new_contours += (contour,)
+
 
 averages, filtered_average, contour_areas = 0, 0, 0
 averages, filtered_average, contour_areas = contour_areas_avg(new_contours)

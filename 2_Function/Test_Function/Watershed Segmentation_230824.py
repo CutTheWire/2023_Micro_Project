@@ -7,7 +7,7 @@ from collections import Counter
 
 
 # Image loading
-img_o = cv2.imread("C:/Users/sjmbe/TW/Micro/230825/3.jpg")
+img_o = cv2.imread("./210403_Origin.jpg")
 height, width = img_o.shape[:2]
 
 img_o = img_o[int(height*0.01):int(height*0.99):,int(width*0.01):int(width*0.99)]
@@ -29,7 +29,7 @@ img_c = np.clip(adjusted_image, 0, 255).astype(np.uint8)
 
 binary_img = copy.deepcopy(img_c)
 # Apply condition to modify pixel values
-condition = binary_img [:, :, 1] <= 60  # channel values less than or equal
+condition = binary_img [:, :, 1] <= 70  # channel values less than or equal
 binary_img [~condition] = [255, 255, 255]
 
 binary_gray = copy.deepcopy(binary_img)
@@ -125,27 +125,27 @@ for contour, contour_area in zip(filtered_contours, contour_areas):
                     red_dict[contour_area] = i
 print(red_dict)
 
-for contour, contour_area in zip(filtered_contours, contour_areas):
-    if contour_area > filtered_average * 1.34:
-        green_contours += red_dict[contour_area]  # 초록색 윤곽선 개수 증가
-        red_areas.append(contour_area)
-        M = cv2.moments(contour)
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
-        text = str(green_contours)
-        text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)[0]
-        text_org = (cX - text_size[0] // 2, cY + text_size[1] // 2)
-        cv2.putText(contour_image, str(green_contours), (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0 ,0), 2)
+# for contour, contour_area in zip(filtered_contours, contour_areas):
+#     if contour_area > filtered_average * 1.34:
+#         green_contours += red_dict[contour_area]  # 초록색 윤곽선 개수 증가
+#         red_areas.append(contour_area)
+#         M = cv2.moments(contour)
+#         cX = int(M["m10"] / M["m00"])
+#         cY = int(M["m01"] / M["m00"])
+#         text = str(green_contours)
+#         text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)[0]
+#         text_org = (cX - text_size[0] // 2, cY + text_size[1] // 2)
+#         cv2.putText(contour_image, str(green_contours), (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0 ,0), 2)
 
-    else:
-        green_contours += 1  # 초록색 윤곽선 개수 증가
-        M = cv2.moments(contour)
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
-        text = str(green_contours)
-        text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)[0]
-        text_org = (cX - text_size[0] // 2, cY + text_size[1] // 2)
-        cv2.putText(contour_image, str(green_contours), (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+#     else:
+#         green_contours += 1  # 초록색 윤곽선 개수 증가
+#         M = cv2.moments(contour)
+#         cX = int(M["m10"] / M["m00"])
+#         cY = int(M["m01"] / M["m00"])
+#         text = str(green_contours)
+#         text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)[0]
+#         text_org = (cX - text_size[0] // 2, cY + text_size[1] // 2)
+#         cv2.putText(contour_image, str(green_contours), (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
     
     
 
