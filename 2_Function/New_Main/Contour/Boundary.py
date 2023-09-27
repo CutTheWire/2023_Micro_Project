@@ -17,7 +17,7 @@ class BoundaryContour:
         self.range_colors = {
             #HSV값 [색상(H), 채도(S), 명도(V)]
             "green": (np.array([40, 80, 80]), np.array([90, 255, 255])), #녹색 검출
-            "purple": (np.array([160, 80, 80]), np.array([175, 255, 255])), # 보라 또는 짙은 핑크와 같은 적색 계열 검출
+            "purple": (np.array([165 , 125, 125]), np.array([175, 255, 255])), # 보라 또는 짙은 핑크와 같은 적색 계열 검출
             "other" : (np.array([0, 0, 0]), np.array([0, 0, 80])) # return_range_color의 color 선언 확인
         }
         # def Find_Contours, def draw_Contour
@@ -38,7 +38,7 @@ class BoundaryContour:
         hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
         lower, upper = self.return_range_color(color)
         mask = cv2.inRange(hsv, lower, upper)
-        contours, _ = cv2.findContours(mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         return contours
         
     def Filter_Contours(self, contours: np.ndarray) -> dict:

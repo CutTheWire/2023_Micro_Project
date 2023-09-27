@@ -9,7 +9,27 @@ class ImageCV:
         self.kernel_3 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
         self.kernel_5 = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
         self.kernel_ones = np.ones((3,3),np.uint8)
-        
+
+        # set_brightness_threshold
+        self.threshold = 0
+
+    def gray(self, image: np.ndarray) -> np.ndarray:
+        '''
+        이미지의 채널 수로 흑백 여부 판단\n
+        Input : 이미지 | Output : 흑백 이미지
+        '''
+        if len(image.shape) == 3:
+            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray_image = image
+        return gray_image
+    
+    def BGR(self, image: np.ndarray) -> np.ndarray:
+        if len(image.shape) == 1:
+            BGR_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        else:
+            BGR_image = image
+        return BGR_image
 
     def Image_Crop(self, image, pos: np.ndarray, dsize: tuple) -> np.ndarray:
         dst = cv2.warpPerspective(image, pos, dsize)
@@ -35,8 +55,8 @@ class ImageCV:
                 values[i] = 0
                 fix_value[i] = 0
             
-        return image[int(height*values[0]):int(height*(1-values[0]+fix_value[0])):,
-                    int(width*values[1]):int(width*(1-values[1]+fix_value[1]))]
+        return image[int(height*(values[0]+fix_value[0])):int(height*(1-values[0]+fix_value[0])):
+                    ,int(width*values[1]):int(width*(1-values[1]+fix_value[1]))]
     
     def Brightness(self, image: np.ndarray) -> np.ndarray:
         image = (np.int16(image) + self.brigtness).astype(np.uint8)
@@ -61,8 +81,76 @@ class ImageCV:
         image = cv2.resize(image, result_image_Resolution)
         return image
 
-    
+    def Histogram_Equalization(self, image: np.ndarray) -> np.ndarray:
+        '''
+        Input: 이미지\n
+        Output: 히스토그램 평활화된 이미지
+        '''
+        # Convert the image to grayscale if it's not already
+        gray_image = self.gray(image)
+        # Apply histogram equalization
+        equalized_image = cv2.equalizeHist(gray_image)
 
+        return equalized_image
+
+    def Contrast_Adjustment(self, image: np.ndarray) -> np.ndarray:
+        alpha = 1.5  # Adjust the contrast factor
+        # Apply the contrast adjustment formula
+        dst = cv2.convertScaleAbs(image, alpha=alpha, beta=(1 - alpha) * 128)
+        return dst
+    
+    def highlight_contours(self, image: np.ndarray, contours: np.ndarray) -> np.ndarray:
+        '''
+        Input : 이미지, 윤곽선\n
+        Output : 윤곽선 이외 지역 흰색으로 변경된 이미지
+        '''
+        # Create a mask for the contour regions
+        mask = np.zeros_like(image)
+
+        # Draw the contours on the mask
+        cv2.drawContours(mask, contours, -1, 255, thickness=cv2.FILLED)
+
+        # Create an inverse mask to keep the areas outside the contours
+        inverse_mask = 255 - mask
+
+        # Set the areas outside the contours to white in the original image
+        image[inverse_mask == 255] = 255
+
+        return image
+    
+    def color_invert(self, image: np.ndarray) -> np.ndarray:
+        inverted_image = 255 - image
+        return inverted_image
+    
+    def threshold_brightness(self, image: np.ndarray, threshold: int) -> np.ndarray:
+        '''
+        이미지의 임계값(threshold) 이하의 밝기를 검은색(0)으로 변경\n
+        Input : 이미지, 임계값 | Output : 밝기 조정된 이미지
+        '''
+        gray_image = self.gray(image)
+        # Apply the threshold to set pixels below the threshold to black
+        _, thresholded_image = cv2.threshold(gray_image, threshold, 255, cv2.THRESH_BINARY)
+        return thresholded_image
+    
+    def White_Mask(self, image: np.ndarray, thresh: np.ndarray) -> np.ndarray:
+        '''
+        Input : 원본 이미지, 추출 이미지\n
+        Output : 마스크 이미지
+        '''
+        mask = np.zeros_like(image)
+        mask[thresh  == 255] = 255
+        white_parts = cv2.bitwise_and(image, mask)
+        return white_parts
+    
+    def Background_Area(self, image: np.ndarray) -> np.ndarray:
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        image = self.gray(image)
+        dist = cv2.distanceTransform(image, cv2.DIST_L2, 5)
+        # foreground area
+        _, sure_fg = cv2.threshold(dist, 0.46* dist.max(), 255, cv2.THRESH_BINARY)
+        sure_bg = cv2.dilate(sure_fg, kernel, iterations=1)
+        sure_bg = sure_bg.astype(np.uint8)
+        return sure_bg
 '''
 -------------------------------------------테스트-------------------------------------------
 '''

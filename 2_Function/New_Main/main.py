@@ -1,9 +1,15 @@
+import sys
 import cv2
 import numpy as np
 import copy
 import tkinter as tk
+from tkinter import font
+from tkinter import messagebox
 from PIL import Image, ImageTk
-from matplotlib import pyplot as plt
+import matplotlib
+matplotlib.use("Qt5Agg")  # 원하는 백엔드로 변경
+import matplotlib.pyplot as plt
+from screeninfo import get_monitors
 
 from IMG.camera import Camera
 from IMG.Image_Save import save
@@ -15,12 +21,12 @@ from Contour.Unit import Seed
 class MainView:
     def __init__(self, root):
         # root style
-        label_style ={
+        self.label_style ={
             'bg': '#333333',
             'fg': 'white',
-            'font': ('Arial', 12, 'bold') }
+            'font': font.Font(family="Helvetica", size=18) }
 
-        back_style ={
+        self.back_style ={
             'bg' : '#666666' }
 
         # root 설정
@@ -38,15 +44,21 @@ class MainView:
         self.dashboard_frame = tk.Frame(root)
         self.button_frame = tk.Frame(self.dashboard_frame)
         self.video_label = tk.Label(self.dashboard_frame)
-        self.capture_button = tk.Button(self.button_frame, text="Check", command=self.Button_click, height=3, width=18)
-        self.output_list = tk.Listbox(self.button_frame, height=10, width=80)
+        self.capture_button = tk.Button(self.button_frame, text="Check", command=self.Button_click, height=2, width=18)
+        self.output_list = tk.Listbox(self.button_frame, height=7, width=80)
+        self.exit_button = tk.Button(self.button_frame, text="X", command=self.exit_clicked, height=2, width=4)
+        self.text_box = tk.Text(self.button_frame, height=2, width=30)
+        self.unit_button = tk.Button(self.button_frame, text="입력",command=self.print_text, height=1, width=3)
 
         # 디자인
-        self.dashboard_frame.configure(**back_style)
-        self.button_frame.configure(**back_style)
-        self.video_label.configure(**back_style)
-        self.capture_button.configure(**label_style)
-        self.output_list.configure(**label_style)
+        self.dashboard_frame.configure(self.back_style)
+        self.button_frame.configure(self.back_style)
+        self.video_label.configure(self.back_style)
+        self.capture_button.configure(self.label_style)
+        self.output_list.configure(self.label_style)
+        self.exit_button.configure(self.label_style)
+        self.text_box.configure(self.label_style)
+        self.unit_button.configure(self.label_style)
         
         # 위치
         self.dashboard_frame.pack(fill="both", expand=True)
@@ -54,36 +66,52 @@ class MainView:
         self.video_label.place(relx=0.5, rely=0.35, anchor="center")
         self.capture_button.place(relx=0.5, rely=0.7, anchor="center")
         self.output_list.place(relx=0.5, rely=0.86, anchor="center")
+        self.exit_button.place(relx=0.97, rely=0.04, anchor="center")  # 상단 여백과 하단 여백 추가
+        self.text_box.place(relx=0.5, rely=0.75, anchor="center")
+        self.unit_button.place(relx=0.565, rely=0.75, anchor="center")
 
-        #---------------------------------------------------------------------------------------------------------------------
-
-        # def Button_click
         self.button_image = None
-        self.IS = save(current_button = "TEST", function = "Micro") # current_button = "Micro", function = "Origin"
+        self.unit_name = ""
+        self.IS = save(self.unit_name, current_button = "Micro", function = "Origin")
 
+    def print_text(self):
+        self.unit_name = str(self.text_box.get("1.0", tk.END)).strip()
+        if self.unit_name:
+            try:
+                self.output_list.insert(tk.END, f"제품 : {self.unit_name} 입력 완료")
+                self.IS = save(self.unit_name, current_button = "Micro", function = "Origin")
+            except:
+                self.output_list.insert(tk.END, f"에러 발생 제품 입력을 재시도 해주세요")
+        else:
+            self.output_list.insert(tk.END, f"제품 입력 안됨, 텍스트 박스에 제품을 입력해 주세요")
 
-
-
+    
+    def exit_clicked(self):
+        result = messagebox.askquestion("Exit Confirmation", "프로그램을 종료 하시겠습니까?")
+        if result == "yes":
+            cam.release_camera()
+            cv2.destroyAllWindows()
+            root.destroy()
+            sys.exit(0)
+            sys.exit(1)
+            
     def video_label_update(self, image: np.ndarray):
         self.image = image
         self.video_label.configure(image=image)
         self.video_label.image = image
+        self.photo_path_or = ""
+        self.photo_path_sc = ""
 
     def Button_click(self):
-        for i in range(2):
-            self.output_list.insert(tk.END, f"{i+1} : {contours_list[i]}")
-        self.output_list.insert(tk.END, f"1차 방정식: y  = {equation_list[0][0]}x + {equation_list[1][0]}")
-        self.output_list.insert(tk.END, f"ㅤ")
-
         if self.button_image is not None:
             image = self.button_image
+
             image = IC.Image_Crop(self.button_image, FP.fix_pos, (900,1200))
             image = IC.Image_Slice(image, height_value=0.02, width_value=0.02)
 
-            photo_path = self.IS.micro_image_save(image)
+            self.photo_path_or = self.IS.micro_image_save(image)
 
-            self.output_list.insert(tk.END, f"{photo_path} 경로에 이미지 저장 완료")
-            self.output_list.insert(tk.END, f"ㅤ")
+            self.output_list.insert(tk.END, f"{self.photo_path_or} 경로에 이미지 저장 완료")
 
             self.Seed_count(image)
             self.output_list.insert(tk.END, f"ㅤ")
@@ -92,29 +120,70 @@ class MainView:
             self.output_list.insert(tk.END, f"ㅤ")
 
     def Seed_count(self, image: np.ndarray):
+        DC_image = copy.deepcopy(image)
+        image = IC.Contrast_Adjustment(image)
+
         SC = Seed(image)
         BGR_list = SC.Find_RGB_Data()
-        RGB_data = SC.Filter_RGB_Data(BGR_list[1])
-        image = SC.RGB_Mask(RGB_data, index)
-        image = SC.Background_Area(image)
-        image, conture = SC.Find_Contours(image)
-        image = SC.Count_Seed(image, conture)
+        RGB_data = SC.Filter_RGB_Data(BGR_list[0])
+        SC_image = SC.RGB_Mask(RGB_data, index, 1.15)
 
-        result_image_Resolution = IC.Scale_Resolution(image, 0.5)
-        image = cv2.resize(image, result_image_Resolution)
-        cv2.imshow("",image)
-        cv2.waitKey(0)
-    
+        IC_image = IC.Histogram_Equalization(SC_image)
+        _, contours = SC.Find_Contours(IC_image)
+        IC_image = IC.highlight_contours(IC_image, contours)
+        IC_image = IC.color_invert(IC_image)
+        IC_image = IC.threshold_brightness(IC_image, 40)
+        IC_image = IC.Background_Area(IC_image)
+
+        white_parts = IC.White_Mask(DC_image, IC_image)
+
+        # SC = Seed(white_parts)
+        # BGR_list = SC.Find_RGB_Data()
+        # RGB_data = SC.Filter_RGB_Data(BGR_list[1])
+        # white_parts = SC.RGB_Mask(RGB_data, index, 1.)
+
+        white_parts = SC.Black_Contour(white_parts)
+
+        # white_parts = SC.Count_Seed(IC_image, conture)
+        IS = save(self.unit_name, current_button = "Micro", function = "Scan") # current_button = "Micro", function = "Micro_Scan"
+        self.photo_path_sc = IS.micro_image_save(white_parts)
+        self.output_list.insert(tk.END, f"{self.photo_path_sc} 경로에 이미지 저장 완료")
+
+        # result_image_Resolution = IC.Scale_Resolution(white_parts, 0.6)
+        # white_parts = cv2.resize(white_parts, result_image_Resolution)
+
+        plt.rcParams['figure.dpi'] = 100
+        monitors = get_monitors()
+        screen_width, screen_height = monitors[0].width, monitors[0].height
+        fig = plt.figure(figsize=(screen_width/100, screen_height/100))
+
+        oringin_image = cv2.imread(self.photo_path_or)
+        scan_image = cv2.imread(self.photo_path_sc)
+
+        plt.subplot(1, 2, 1)
+        plt.imshow(oringin_image)
+        plt.axis('off')  # 선택적으로 축을 표시하지 않도록 설정할 수 있습니다.
+        plt.title("Origin")
+
+        # 두 번째 이미지를 오른쪽에 표시
+        plt.subplot(1, 2, 2)
+        plt.imshow(scan_image)
+        plt.axis('off')  # 선택적으로 축을 표시하지 않도록 설정할 수 있습니다.
+        plt.title("Scan")
+        plt.show()
 
 
 
 if __name__ == "__main__":
     cam = Camera()
     cam.open_camera()  # 카메라 열기
+    print(cam.cameras_list())
     cam.set_cap_size(2560, 1440)
-
     root = tk.Tk()
     app = MainView(root)
+    app.output_list.insert(tk.END, f"{cam.name} 카메라 활성화")
+    app.output_list.insert(tk.END, f"2560x1440 해상도")
+    app.output_list.insert(tk.END, f"ㅤ")
 
     while cam.is_camera_open():
         frame = cam.get_frame()  # 프레임 가져오기
@@ -156,7 +225,7 @@ if __name__ == "__main__":
             pass
 
         # 비디오 레이블 이미지
-        fream_Resolution = IC.Scale_Resolution(frame, 0.3)
+        fream_Resolution = IC.Scale_Resolution(frame, 0.6)
         video_label_image = cv2.resize(frame, fream_Resolution)
 
         try:
