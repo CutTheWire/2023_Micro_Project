@@ -16,7 +16,7 @@ lower_green = np.array([40, 80, 80])
 upper_green = np.array([90, 255, 255])
 
 # 자주색 범위 설정 (HSV 순서로 설정)
-lower_purple = np.array([160, 80, 80])
+lower_purple = np.array([160, 100, 100])
 upper_purple = np.array([175, 255, 255])
 
 Line = """

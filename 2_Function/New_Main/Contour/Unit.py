@@ -133,7 +133,7 @@ class Seed:
                 index += 2
                 color = (255, 255, 255)
 
-            elif  area <= average_area*0.2:
+            elif  area <= average_area*0.5:
                 continue
             else:
                 index += 1
@@ -145,7 +145,8 @@ class Seed:
                 cX = int(M["m10"] / M["m00"])
                 cY = int(M["m01"] / M["m00"])
                 cv2.putText(result, str(index), (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-        
+
+        result = self.IC.Image_empty(result)
         cv2.putText(result, f"PART COUNT: {index}", (10, 30), cv2.FONT_HERSHEY_TRIPLEX, 1, self.colors["text"], 2)
         return result
 

@@ -16,8 +16,6 @@ if socket.gethostname() != host_name:
 area_threshold = 500
 threshold_value = 100
 
-
-
 cap = cv2.VideoCapture(2)
 
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3264)

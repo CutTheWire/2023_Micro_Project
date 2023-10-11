@@ -3,45 +3,52 @@ import numpy as np
 import copy
 import image_save as IS
 
-# 이미지를 읽어옵니다.
-image = cv2.imread('./1.jpg')
+class SeedC:
+    def __init__(self, input_image_path: str) -> None:
+        self.image = cv2.imread(input_image_path)
+        self.font = cv2.FONT_HERSHEY_SIMPLEX
+        self.threshold  = 120
 
-# 그레이스케일로 변환합니다.
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    def grayscale(self) -> np.ndarray:
+        return cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
 
-# 이진화를 수행합니다. 밝기가 100 이상인 픽셀을 하얀색(255)으로 설정합니다.
-_, thresh = cv2.threshold(gray, 120, 255, cv2.THRESH_BINARY)
+    def binarize(self) -> np.ndarray:
+        gray = self.grayscale()
+        _, thresh = cv2.threshold(gray, self.threshold, 255, cv2.THRESH_BINARY)
+        return cv2.bitwise_not(thresh)
 
-# thresh 이미지를 색 반전합니다.
-thresh = cv2.bitwise_not(thresh)
-# 윤곽선을 찾습니다.
-contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    def find_contours(self) -> np.ndarray:
+        thresh = self.binarize()
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        return contours
 
-# 원본 이미지에 윤곽선을 그립니다.
-result_image = copy.deepcopy(image)
+    def draw_contours(self, contours: np.ndarray) -> np.ndarray:
+        result_image = copy.deepcopy(self.image)
+        result_image[self.binarize() == 0] = [255, 255, 255]
+        cv2.drawContours(result_image, contours, -1, (0, 255, 0), 2)
+        return result_image
 
-# 밝기가 50 이상인 픽셀을 하얀색으로 칠한 이미지를 만듭니다.
-result_image [thresh == 0] = [255, 255, 255]
-cv2.drawContours(result_image, contours, -1, (0, 255, 0), 2)  # 윤곽선을 초록색으로 그립니다.
+    def count_contours(self) -> int:
+        return len(self.find_contours())
 
-# 윤곽선 수를 출력합니다.
-contour_count = len(contours)
+    def annotate_contours(self, contours: np.ndarray) -> np.ndarray:
+        result_image = self.draw_contours(contours)
+        for i, contour in enumerate(contours):
+            M = cv2.moments(contour)
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+                cv2.putText(result_image, str(i + 1), (cX, cY), self.font, 1, (0, 0, 255), 2)
+        return result_image
 
-# 각 윤곽선 중심에 카운트를 그립니다.
-font = cv2.FONT_HERSHEY_SIMPLEX
-for i, contour in enumerate(contours):
-    M = cv2.moments(contour)
-    if M["m00"] != 0:
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
-        cv2.putText(result_image, str(i + 1), (cX, cY), font, 1, (0, 0, 255), 2)
+if __name__ == "__main__":
+    SC = SeedC('./1.jpg')
+    contours =SC.find_contours()
+    result_image = SC.annotate_contours(contours)
 
-
-cv2.putText(result_image, f"seed count: {contour_count}", (10, 30), font, 1, (0, 0, 255), 2)
-
-# 결과 이미지를 표시합니다.
-cv2.imshow('Contours', result_image)
-IS.image_save(result_image, " ")
-# 키 입력 대기 및 윈도우 종료
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    # 결과 이미지를 표시합니다.
+    cv2.putText(result_image, f"seed count: {SC.count_contours()}", (10, 30), SC.font, 1, (0, 0, 255), 2)
+    cv2.imshow('Contours', result_image)
+    IS.image_save(result_image, " ")
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
