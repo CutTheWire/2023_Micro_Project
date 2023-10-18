@@ -37,6 +37,11 @@ class MainView:
             'bg': '#343437',
             'fg': 'white',
             'font': font.Font(family="Helvetica", size=15) }
+        
+        self.exit_label_style ={
+            'bg': '#B43437',
+            'fg': 'white',
+            'font': font.Font(family="Helvetica", size=15) }
 
         self.back_style ={
             'bg' : '#343437' }
@@ -78,7 +83,7 @@ class MainView:
         self.root.grid_columnconfigure(1, weight=1)
 
         # GUI 생성
-        self.exit_button = tk.Button(self.frame1, text="X", command=self.exit_clicked, width=5)
+        self.exit_button = tk.Button(self.frame1, text="X", command=self.exit_clicked, width=4)
         self.output_list = tk.Listbox(self.frame2)
         self.scrollbar = tk.Scrollbar(self.output_list, orient=tk.VERTICAL)
         self.xscrollbar = tk.Scrollbar(self.output_list, orient=tk.HORIZONTAL)
@@ -93,6 +98,7 @@ class MainView:
 
         # Listbox와 Scrollbar 연결
         self.output_list.config(yscrollcommand = self.scrollbar.set)
+        
         self.scrollbar.config(command = self.output_list.yview)
         self.output_list.config(xscrollcommand=self.xscrollbar.set)
         self.xscrollbar.config(command = self.output_list.xview)
@@ -108,7 +114,7 @@ class MainView:
         self.frame4.configure(self.back_style)
         self.frame5.configure(self.root_style)
 
-        self.exit_button.configure(self.label_style)
+        self.exit_button.configure(self.exit_label_style)
         self.output_list.configure(self.label_style)
         self.video_label.configure(self.back_style)
         self.capture_text.configure(self.text_label_style)

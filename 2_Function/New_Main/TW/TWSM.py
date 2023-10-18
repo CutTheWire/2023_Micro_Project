@@ -1,9 +1,12 @@
 import platform
 import subprocess
+import wmi
 
 class TW:
     def __init__(self) -> None:
-        self.result = "212NZMM047635"
+        self.result = "178BFBFF00800F82B45629E1"
+        self._cpu_info = None
+        self._LogicalDisk = None
 
     def __eq__(self, other) -> bool:
         if isinstance(other, TW):
@@ -16,10 +19,28 @@ class TW:
     def __call__(self):
         if platform.system() == 'Windows':
             try:
-                result = subprocess.check_output('wmic bios get serialnumber').decode("utf-8")
-                result = result.split("\r\r")[1].split("\n")[1].replace(" ", "").strip()
+                result = self.cpu_info + self.LogicalDisk
                 return self == result
             except Exception as e:
                 return e
         else:
             return 2
+        
+    @property
+    def cpu_info(self):
+        c = wmi.WMI()
+        processors = c.Win32_Processor()
+        if processors:
+            return processors[0].ProcessorId
+        else:
+            return  "0000000000000000"
+        
+    @property
+    def LogicalDisk(self):
+        drive = "C"
+        c = wmi.WMI()
+        logical_disks = c.Win32_LogicalDisk(DeviceID=drive + ":")
+        if logical_disks:
+            return  logical_disks[0].VolumeSerialNumber
+        else:
+            return  "00000000"
