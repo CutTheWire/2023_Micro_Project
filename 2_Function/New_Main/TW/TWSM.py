@@ -4,15 +4,15 @@ import wmi
 
 class TW:
     def __init__(self) -> None:
-        self.result = "178BFBFF00800F82B45629E1"
+        self.result = ["178BFBFF00800F82B45629E1", "BFEBFBFF000906A3C425D006"]
         self._cpu_info = None
         self._LogicalDisk = None
 
     def __eq__(self, other) -> bool:
         if isinstance(other, TW):
-            return self.result == other.result
+            return all(item in self.result for item in other.result)
         elif isinstance(other, str):
-            return self.result == other
+            return other in self.result
         else:
             return False
         
