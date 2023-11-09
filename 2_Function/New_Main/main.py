@@ -247,14 +247,17 @@ class MainView:
         plt.show()
 
 if __name__ == "__main__":
+    root = tk.Tk()
+    root.withdraw()
     T = TW()
     if T() == True:
+        root.withdraw()
+        app = MainView(root)
+
         subapp = QApplication(sys.argv)
         loading_screen = LoadingScreen()
         loading_screen.show()
 
-        root = tk.Tk()
-        app = MainView(root)
         cam = Camera()
         cam.open_camera()  # 카메라 열기
         cam.set_cap_size(app.screen_width, (app.screen_width*9)//16)

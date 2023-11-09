@@ -9,15 +9,15 @@ class BoundaryContour:
         self.colors = {
             "blue": (227, 55, 55),
             "green": (182, 55, 78),
-            "purple": (39, 217, 144),
+            "purple": (35, 220, 144),
             "other" : (55, 55, 55),
         }
 
         # def return_range_color
         self.range_colors = {
             #HSV값 [색상(H), 채도(S), 명도(V)]
-            "green": (np.array([40, 80, 80]), np.array([90, 255, 255])), #녹색 검출
-            "purple": (np.array([165 , 125, 125]), np.array([175, 255, 255])), # 보라 또는 짙은 핑크와 같은 적색 계열 검출
+            "green": (np.array([40, 75, 100]), np.array([90, 255, 255])), #녹색 검출
+            "purple": (np.array([165 , 115, 140]), np.array([175, 255, 255])), # 보라 또는 짙은 핑크와 같은 적색 계열 검출
             "other" : (np.array([0, 0, 0]), np.array([0, 0, 80])) # return_range_color의 color 선언 확인
         }
         # def Find_Contours, def draw_Contour
